@@ -1,0 +1,5 @@
+xlsx.full.min.js linguist-vendored
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.md text eol=lf

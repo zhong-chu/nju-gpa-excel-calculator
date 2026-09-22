@@ -1,0 +1,9 @@
+{
+  "name": "nju-gpa-excel-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "在本机浏览器中读取南京大学成绩 Excel 并计算 GPA",
+  "scripts": {
+    "test": "node app.test.js"
+  }
+}

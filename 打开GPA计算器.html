@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NJU GPA Excel 计算器</title>
+    <link rel="stylesheet" href="app.css">
+    <script src="xlsx.full.min.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div>
+          <p class="eyebrow">南京大学成绩工具</p>
+          <h1>NJU GPA Excel 计算器</h1>
+          <p class="subtitle">导入教务系统导出的 Excel，课程数据只在本机浏览器中处理。</p>
+        </div>
+        <button id="choose-again" class="ghost-button" type="button" hidden>重新选择文件</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section id="upload-view" class="upload-card">
+        <input id="file-input" type="file" accept=".xlsx,.xls,.xlsb,.csv" hidden>
+        <button id="drop-zone" class="drop-zone" type="button">
+          <span class="file-mark">XLSX</span>
+          <strong>选择或拖入成绩 Excel</strong>
+          <span>支持 .xlsx、.xls、.xlsb 和 .csv</span>
+        </button>
+        <ol class="steps">
+          <li>在“我的成绩”页面点击“导出”。</li>
+          <li>把下载的文件拖到这里。</li>
+          <li>按课程性质整类选择，结果会自动计算。</li>
+        </ol>
+        <p id="upload-message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section id="calculator-view" hidden>
+        <div class="file-line">
+          <div>
+            <strong id="file-name"></strong>
+            <span id="sheet-name"></span>
+          </div>
+          <span id="data-note"></span>
+        </div>
+
+        <div class="metrics" aria-live="polite">
+          <article>
+            <span>已选课程</span>
+            <strong id="selected-count">0</strong>
+          </article>
+          <article>
+            <span>已选学分</span>
+            <strong id="selected-credits">0</strong>
+          </article>
+          <article class="gpa-card">
+            <span>五分制 GPA</span>
+            <strong id="gpa-result">—</strong>
+          </article>
+        </div>
+
+        <section class="controls">
+          <div class="control-line">
+            <span class="control-label">课程性质</span>
+            <div id="type-filters" class="filter-buttons"></div>
+          </div>
+          <div class="control-line actions-line">
+            <span class="control-label">批量选择</span>
+            <div class="filter-buttons">
+              <button id="select-all" type="button">全选可计分课程</button>
+              <button id="select-none" type="button">全不选</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="check-column"><input id="toggle-all" type="checkbox" aria-label="选择全部可计分课程"></th>
+                <th>学年学期</th>
+                <th>课程名称</th>
+                <th>课程性质</th>
+                <th class="number-column">学分</th>
+                <th class="number-column">成绩</th>
+              </tr>
+            </thead>
+            <tbody id="course-list"></tbody>
+          </table>
+        </div>
+
+        <p class="formula-note">计算方式：Σ（成绩 × 学分）÷ Σ学分 ÷ 20。“通过”等非数值成绩会显示但不参与 GPA；</p>
+        <p class="disclaimer">本项目为非官方辅助工具，计算结果仅供个人参考。</p>
+      </section>
+    </main>
+  </body>
+</html>
