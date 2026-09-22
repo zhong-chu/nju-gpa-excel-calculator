@@ -9,24 +9,25 @@
 
 > 本项目是非官方辅助工具，与南京大学官方无隶属关系；计算结果仅供个人参考。
 
-## :sparkles: 使用方法
 
-1. 在南京大学教服平台“我的成绩”页面选择你需要的学期成绩点击“导出”。
-2. 双击 `打开GPA计算器.html`。
-3. 选择或拖入刚刚导出的 Excel 文件。
-4. 使用“课程性质”按钮整类选择平台、通修、通识等课程，GPA 和已选学分会自动更新。
-5. 你可以先在线试试看：**(https://zhong-chu.github.io/nju-gpa-excel-calculator/)**
+## :sparkles: 使用方法
+1. 点击仓库的 **Code** 按钮，**Download ZIP** 下载完整项目，下载后解压文件夹。
+2. 在南京大学教服平台“我的成绩”页面选择你需要的学期成绩点击“导出”。
+3. 双击 `打开GPA计算器.html`。
+4. 选择或拖入刚刚导出的 Excel 文件。
+5. 使用“课程性质”按钮整类选择平台、通修、通识等课程，GPA 和已选学分会自动更新。
+6. 你可以先在线试试看：**(https://zhong-chu.github.io/nju-gpa-excel-calculator/)**
 <p align="center">
   <img
     src="https://github.com/user-attachments/assets/f1c7a256-b73f-426d-8f28-6910939f7be1"
     alt="GitHub 1"
-    height="300"
+    height="250"
   >
   &nbsp;
   <img
     src="https://github.com/user-attachments/assets/c26a87ee-4ef3-47e0-9c5c-223c3b2a2345"
     alt="GitHub 2"
-    height="300"
+    height="250"
   >
 </p>
 
