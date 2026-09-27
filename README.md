@@ -11,9 +11,7 @@
 >
 > 新增按学期筛选、成绩模拟和 GPA 变化对比，并更新为南大紫界面。
 >
-> <img width="933" height="669" alt="new2" src="https://github.com/user-attachments/assets/928efce8-3be8-4ee9-bb68-d6c559efb03b" />
-<img width="1040" height="650" alt="new1" src="https://github.com/user-attachments/assets/a9f3481d-c422-46e4-835c-ceb25c489ff3" />
- [查看更新并下载 v1.1.0](https://github.com/zhong-chu/nju-gpa-excel-calculator/releases/tag/v1.1.0)
+> [查看更新并下载 v1.1.0](https://github.com/zhong-chu/nju-gpa-excel-calculator/releases/tag/v1.1.0)
 
 ## ✨ v1.1.0 更新内容
 
