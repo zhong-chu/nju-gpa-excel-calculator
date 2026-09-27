@@ -13,9 +13,11 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div>
-          <p class="eyebrow">南京大学成绩工具</p>
+          <div class="title-meta">
+            <p class="eyebrow">南京大学成绩工具</p>
+            <span class="version-badge">v1.1</span>
+          </div>
           <h1>NJU GPA Excel 计算器</h1>
-          <p class="subtitle">导入教务系统导出的 Excel，课程数据只在本机浏览器中处理。</p>
         </div>
         <button id="choose-again" class="ghost-button" type="button" hidden>重新选择文件</button>
       </div>
@@ -29,6 +31,39 @@
           <strong>选择或拖入成绩 Excel</strong>
           <span>支持 .xlsx、.xls、.xlsb 和 .csv</span>
         </button>
+        <section class="feature-intro" aria-label="功能介绍">
+          <div class="feature-grid">
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">学期</span>
+              <div>
+                <strong>按学期筛选</strong>
+                <p>快速查看单学期课程、学分与 GPA。</p>
+              </div>
+            </article>
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">模拟</span>
+              <div>
+                <strong>成绩模拟</strong>
+                <p>临时调整成绩，对比原始与模拟 GPA。</p>
+              </div>
+            </article>
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">分类</span>
+              <div>
+                <strong>课程分类</strong>
+                <p>按平台、通修、通识等性质批量选择。</p>
+              </div>
+            </article>
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">本地</span>
+              <div>
+                <strong>隐私优先</strong>
+                <p>文件只在浏览器中读取，不上传、不保存。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+        <p class="steps-title">三步开始</p>
         <ol class="steps">
           <li>在“我的成绩”页面点击“导出”。</li>
           <li>把下载的文件拖到这里。</li>
@@ -55,13 +90,23 @@
             <span>已选学分</span>
             <strong id="selected-credits">0</strong>
           </article>
-          <article class="gpa-card">
-            <span>五分制 GPA</span>
+          <article>
+            <span>原始 GPA</span>
             <strong id="gpa-result">—</strong>
+          </article>
+          <article class="gpa-card">
+            <span>模拟 GPA</span>
+            <strong id="simulated-gpa">—</strong>
+            <small id="gpa-delta">尚未修改成绩</small>
           </article>
         </div>
 
         <section class="controls">
+          <div class="control-line">
+            <span class="control-label">学期范围</span>
+            <div id="term-filters" class="filter-buttons"></div>
+          </div>
+          <p id="term-stats" class="scope-note"></p>
           <div class="control-line">
             <span class="control-label">课程性质</span>
             <div id="type-filters" class="filter-buttons"></div>
@@ -71,8 +116,11 @@
             <div class="filter-buttons">
               <button id="select-all" type="button">全选可计分课程</button>
               <button id="select-none" type="button">全不选</button>
+              <button id="simulation-toggle" type="button" aria-pressed="false">开启成绩模拟</button>
+              <button id="reset-simulation" type="button" hidden>恢复原始成绩</button>
             </div>
           </div>
+          <p id="simulation-message" class="simulation-message" aria-live="polite"></p>
         </section>
 
         <div class="table-wrap">
@@ -84,14 +132,14 @@
                 <th>课程名称</th>
                 <th>课程性质</th>
                 <th class="number-column">学分</th>
-                <th class="number-column">成绩</th>
+                <th class="number-column grade-column">成绩 / 模拟</th>
               </tr>
             </thead>
             <tbody id="course-list"></tbody>
           </table>
         </div>
 
-        <p class="formula-note">计算方式：Σ（成绩 × 学分）÷ Σ学分 ÷ 20。“通过”等非数值成绩会显示但不参与 GPA；</p>
+        <p class="formula-note">计算方式：Σ（成绩 × 学分）÷ Σ学分 ÷ 20。“通过”等非数值成绩会显示但不参与 GPA；模拟成绩仅用于当前页面试算，不会修改原始 Excel。</p>
         <p class="disclaimer">本项目为非官方辅助工具，计算结果仅供个人参考。</p>
       </section>
     </main>

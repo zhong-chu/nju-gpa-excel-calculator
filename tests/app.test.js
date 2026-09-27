@@ -5,8 +5,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const projectDir = __dirname;
-const XLSX = require(path.join(projectDir, "xlsx.full.min.js"));
+const projectDir = path.resolve(__dirname, "..");
+const assetDir = path.join(projectDir, "docs", "assets");
+const XLSX = require(path.join(assetDir, "xlsx.full.min.js"));
 
 function fakeElement() {
   return {
@@ -45,8 +46,8 @@ const context = {
   RegExp
 };
 vm.createContext(context);
-const source = fs.readFileSync(path.join(projectDir, "app.js"), "utf8");
-vm.runInContext(`${source}\nthis.__testApi = { readWorkbook, parseGrade, isSelectable };`, context);
+const source = fs.readFileSync(path.join(assetDir, "app.js"), "utf8");
+vm.runInContext(`${source}\nthis.__testApi = { readWorkbook, parseGrade, isSelectable, calculateStats, getScopedIndexes, state, ALL_TERMS };`, context);
 
 const rows = [
   ["南京大学成绩单"],
@@ -82,11 +83,28 @@ const weighted = numeric.reduce((sum, course) => sum + course.credit * course.gr
 assert.equal(credits, 6.25);
 assert.equal((weighted / credits / 20).toFixed(4), "3.6860");
 
-const html = fs.readFileSync(path.join(projectDir, "index.html"), "utf8");
+context.__testApi.state.courses = parsed.courses;
+context.__testApi.state.selected = new Set([0, 2, 3]);
+context.__testApi.state.simulatedGrades = new Map([[0, 80]]);
+context.__testApi.state.activeTerm = context.__testApi.ALL_TERMS;
+const originalStats = context.__testApi.calculateStats([0, 2, 3], false);
+const simulatedStats = context.__testApi.calculateStats([0, 2, 3], true);
+assert.equal(originalStats.gpa.toFixed(4), "3.6860");
+assert.equal(simulatedStats.gpa.toFixed(4), "4.1020");
+
+context.__testApi.state.activeTerm = "2025-2026学年 第1学期";
+assert.deepEqual(Array.from(context.__testApi.getScopedIndexes(false)), [0, 2, 3]);
+context.__testApi.state.activeTerm = "2025-2026学年 第2学期";
+assert.deepEqual(Array.from(context.__testApi.getScopedIndexes(false)), [1]);
+
+const html = fs.readFileSync(path.join(projectDir, "docs", "index.html"), "utf8");
+const launcher = fs.readFileSync(path.join(projectDir, "打开GPA计算器.html"), "utf8");
 for (const id of source.matchAll(/getElementById\("([^"]+)"\)/g)) {
   assert.match(html, new RegExp(`id=["']${id[1]}["']`), `index.html 缺少 #${id[1]}`);
+  assert.match(launcher, new RegExp(`id=["']${id[1]}["']`), `打开GPA计算器.html 缺少 #${id[1]}`);
 }
+assert.match(launcher, /docs\/assets\/app\.js/);
 assert.doesNotMatch(source, /\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon)\b/);
 assert.doesNotMatch(source, /\b(?:localStorage|sessionStorage|document\.cookie)\b/);
 
-console.log("全部测试通过：Excel 解析、课程性质、非数值成绩、GPA、页面结构和隐私检查。");
+console.log("全部测试通过：Excel 解析、课程性质、非数值成绩、学期筛选、成绩模拟、GPA、页面结构和隐私检查。");

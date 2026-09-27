@@ -1,8 +1,13 @@
 "use strict";
 
+const ALL_TERMS = "__all_terms__";
+
 const state = {
   courses: [],
   selected: new Set(),
+  simulatedGrades: new Map(),
+  activeTerm: ALL_TERMS,
+  simulationEnabled: false,
   fileName: "",
   sheetName: ""
 };
@@ -20,11 +25,18 @@ const elements = {
   selectedCount: document.getElementById("selected-count"),
   selectedCredits: document.getElementById("selected-credits"),
   gpaResult: document.getElementById("gpa-result"),
+  simulatedGpa: document.getElementById("simulated-gpa"),
+  gpaDelta: document.getElementById("gpa-delta"),
+  termFilters: document.getElementById("term-filters"),
+  termStats: document.getElementById("term-stats"),
   typeFilters: document.getElementById("type-filters"),
   courseList: document.getElementById("course-list"),
   toggleAll: document.getElementById("toggle-all"),
   selectAll: document.getElementById("select-all"),
-  selectNone: document.getElementById("select-none")
+  selectNone: document.getElementById("select-none"),
+  simulationToggle: document.getElementById("simulation-toggle"),
+  resetSimulation: document.getElementById("reset-simulation"),
+  simulationMessage: document.getElementById("simulation-message")
 };
 
 const PASS_FAIL = /^(通过|合格|不通过|不合格)(?:\s*[（(].*[）)])?$/;
@@ -134,6 +146,9 @@ async function loadFile(file) {
     state.fileName = file.name;
     state.sheetName = result.sheetName;
     state.courses = result.courses;
+    state.activeTerm = ALL_TERMS;
+    state.simulationEnabled = false;
+    state.simulatedGrades.clear();
     state.selected = new Set(
       result.courses
         .map((course, index) => Number.isFinite(course.grade) && course.credit > 0 ? index : null)
@@ -153,28 +168,78 @@ function isSelectable(course) {
   return Number.isFinite(course.grade) && course.credit > 0;
 }
 
-function updateSummary() {
-  const selectedCourses = Array.from(state.selected)
-    .map((index) => state.courses[index])
-    .filter((course) => course && isSelectable(course));
-  const totalCredits = selectedCourses.reduce((sum, course) => sum + course.credit, 0);
-  const weightedScore = selectedCourses.reduce((sum, course) => sum + course.grade * course.credit, 0);
-  const selectableCount = state.courses.filter(isSelectable).length;
+function courseTerm(course) {
+  return course.term || "未标明学期";
+}
 
-  elements.selectedCount.textContent = String(selectedCourses.length);
-  elements.selectedCredits.textContent = formatNumber(totalCredits);
-  elements.gpaResult.textContent = totalCredits > 0 ? (weightedScore / totalCredits / 20).toFixed(4) : "—";
-  elements.toggleAll.checked = selectedCourses.length > 0 && selectedCourses.length === selectableCount;
-  elements.toggleAll.indeterminate = selectedCourses.length > 0 && selectedCourses.length < selectableCount;
+function courseInScope(course) {
+  return state.activeTerm === ALL_TERMS || courseTerm(course) === state.activeTerm;
+}
+
+function getScopedIndexes(selectableOnly = false) {
+  return state.courses
+    .map((course, index) => courseInScope(course) && (!selectableOnly || isSelectable(course)) ? index : null)
+    .filter((index) => index !== null);
+}
+
+function getEffectiveGrade(course, index) {
+  return state.simulatedGrades.has(index) ? state.simulatedGrades.get(index) : course.grade;
+}
+
+function calculateStats(indexes, useSimulatedGrades = false) {
+  const courses = indexes
+    .map((index) => ({ course: state.courses[index], index }))
+    .filter(({ course }) => course && isSelectable(course));
+  const totalCredits = courses.reduce((sum, { course }) => sum + course.credit, 0);
+  const weightedScore = courses.reduce((sum, { course, index }) => {
+    const grade = useSimulatedGrades ? getEffectiveGrade(course, index) : course.grade;
+    return sum + grade * course.credit;
+  }, 0);
+  return {
+    courseCount: courses.length,
+    totalCredits,
+    gpa: totalCredits > 0 ? weightedScore / totalCredits / 20 : null
+  };
+}
+
+function updateSummary() {
+  const scopedIndexes = getScopedIndexes(false);
+  const selectableIndexes = getScopedIndexes(true);
+  const selectedIndexes = selectableIndexes.filter((index) => state.selected.has(index));
+  const original = calculateStats(selectedIndexes, false);
+  const simulated = calculateStats(selectedIndexes, true);
+  const simulatedInScope = selectedIndexes.some((index) => state.simulatedGrades.has(index));
+
+  elements.selectedCount.textContent = String(original.courseCount);
+  elements.selectedCredits.textContent = formatNumber(original.totalCredits);
+  elements.gpaResult.textContent = original.gpa === null ? "—" : original.gpa.toFixed(4);
+  elements.simulatedGpa.textContent = simulated.gpa === null ? "—" : simulated.gpa.toFixed(4);
+  elements.gpaDelta.className = "";
+  if (original.gpa === null || simulated.gpa === null) {
+    elements.gpaDelta.textContent = "";
+  } else if (!simulatedInScope) {
+    elements.gpaDelta.textContent = "尚未修改成绩";
+  } else {
+    const difference = simulated.gpa - original.gpa;
+    elements.gpaDelta.textContent = `${difference >= 0 ? "+" : ""}${difference.toFixed(4)}`;
+    elements.gpaDelta.className = difference > 0 ? "positive" : difference < 0 ? "negative" : "";
+  }
+
+  const scopeName = state.activeTerm === ALL_TERMS ? "全部学期" : state.activeTerm;
+  const nonNumericCount = scopedIndexes.filter((index) => !isSelectable(state.courses[index])).length;
+  elements.termStats.textContent = `${scopeName}：共 ${scopedIndexes.length} 门，可计分 ${selectableIndexes.length} 门${nonNumericCount ? `，非数值 ${nonNumericCount} 门` : ""}`;
+
+  elements.toggleAll.checked = selectedIndexes.length > 0 && selectedIndexes.length === selectableIndexes.length;
+  elements.toggleAll.indeterminate = selectedIndexes.length > 0 && selectedIndexes.length < selectableIndexes.length;
+  elements.resetSimulation.hidden = state.simulatedGrades.size === 0;
   updateFilterButtons();
 }
 
 function updateFilterButtons() {
   for (const button of elements.typeFilters.querySelectorAll("button[data-type]")) {
     const type = button.dataset.type;
-    const indexes = state.courses
-      .map((course, index) => isSelectable(course) && (course.type || "未分类") === type ? index : null)
-      .filter((index) => index !== null);
+    const indexes = getScopedIndexes(true)
+      .filter((index) => (state.courses[index].type || "未分类") === type);
     const selectedCount = indexes.filter((index) => state.selected.has(index)).length;
     button.classList.toggle("active", indexes.length > 0 && selectedCount === indexes.length);
     button.classList.toggle("partial", selectedCount > 0 && selectedCount < indexes.length);
@@ -182,10 +247,38 @@ function updateFilterButtons() {
   }
 }
 
+function renderTermFilters() {
+  elements.termFilters.replaceChildren();
+  const counts = new Map();
+  for (const course of state.courses) {
+    const term = courseTerm(course);
+    counts.set(term, (counts.get(term) || 0) + 1);
+  }
+
+  const options = [[ALL_TERMS, "全部学期", state.courses.length], ...Array.from(counts, ([term, count]) => [term, term, count])];
+  for (const [value, label, count] of options) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.term = value;
+    button.textContent = `${label} ${count}`;
+    button.classList.toggle("active", state.activeTerm === value);
+    button.setAttribute("aria-pressed", String(state.activeTerm === value));
+    button.addEventListener("click", () => {
+      state.activeTerm = value;
+      renderTermFilters();
+      renderFilters();
+      renderCourses();
+      updateSummary();
+    });
+    elements.termFilters.appendChild(button);
+  }
+}
+
 function renderFilters() {
   elements.typeFilters.replaceChildren();
   const counts = new Map();
-  for (const course of state.courses) {
+  for (const index of getScopedIndexes(false)) {
+    const course = state.courses[index];
     const type = course.type || "未分类";
     counts.set(type, (counts.get(type) || 0) + 1);
   }
@@ -194,16 +287,15 @@ function renderFilters() {
     button.type = "button";
     button.dataset.type = type;
     button.textContent = `${type} ${count}`;
-    button.title = `选中或取消全部“${type}”课程`;
+    button.title = `选中或取消当前学期范围内的“${type}”课程`;
     button.addEventListener("click", () => toggleType(type));
     elements.typeFilters.appendChild(button);
   }
 }
 
 function toggleType(type) {
-  const indexes = state.courses
-    .map((course, index) => isSelectable(course) && (course.type || "未分类") === type ? index : null)
-    .filter((index) => index !== null);
+  const indexes = getScopedIndexes(true)
+    .filter((index) => (state.courses[index].type || "未分类") === type);
   const shouldSelect = indexes.some((index) => !state.selected.has(index));
   for (const index of indexes) {
     if (shouldSelect) state.selected.add(index);
@@ -215,19 +307,89 @@ function toggleType(type) {
 }
 
 function setAll(selected) {
-  state.selected.clear();
-  state.courses.forEach((course, index) => {
-    if (selected && isSelectable(course)) state.selected.add(index);
-  });
+  for (const index of getScopedIndexes(true)) {
+    if (selected) state.selected.add(index);
+    else state.selected.delete(index);
+  }
   for (const checkbox of elements.courseList.querySelectorAll("input[type='checkbox']")) {
     checkbox.checked = selected && !checkbox.disabled;
   }
   updateSummary();
 }
 
+function updateSimulationControls() {
+  elements.simulationToggle.textContent = state.simulationEnabled ? "退出成绩模拟" : "开启成绩模拟";
+  elements.simulationToggle.classList.toggle("active", state.simulationEnabled);
+  elements.simulationToggle.setAttribute("aria-pressed", String(state.simulationEnabled));
+  elements.simulationMessage.textContent = state.simulationEnabled
+    ? "修改表格中的数值成绩即可试算；原始 Excel 不会被更改。"
+    : "";
+}
+
+function renderGradeCell(course, index, row) {
+  const gradeCell = document.createElement("td");
+  gradeCell.className = "number-column grade-column";
+
+  if (!state.simulationEnabled || !isSelectable(course)) {
+    gradeCell.textContent = course.gradeDisplay;
+    return gradeCell;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "grade-input-wrap";
+  const input = document.createElement("input");
+  input.type = "number";
+  input.min = "0";
+  input.max = "100";
+  input.step = "0.1";
+  input.className = "grade-input";
+  input.value = formatNumber(getEffectiveGrade(course, index));
+  input.setAttribute("aria-label", `模拟 ${course.name} 的成绩`);
+
+  const original = document.createElement("small");
+  original.className = "grade-original";
+  const refreshMarker = () => {
+    const changed = state.simulatedGrades.has(index);
+    row.classList.toggle("simulated", changed);
+    input.classList.toggle("changed", changed);
+    original.textContent = changed ? `原 ${course.gradeDisplay}` : "";
+  };
+
+  input.addEventListener("input", () => {
+    const value = Number(input.value);
+    if (input.value.trim() === "") {
+      state.simulatedGrades.delete(index);
+      elements.simulationMessage.textContent = "该课程暂按原始成绩计算；请输入新的模拟成绩。";
+    } else if (!Number.isFinite(value) || value < 0 || value > 100) {
+      elements.simulationMessage.textContent = "模拟成绩必须是 0 到 100 之间的数字。";
+      return;
+    } else if (value === course.grade) {
+      state.simulatedGrades.delete(index);
+      elements.simulationMessage.textContent = "该课程已恢复为原始成绩。";
+    } else {
+      state.simulatedGrades.set(index, value);
+      elements.simulationMessage.textContent = `已模拟“${course.name}”：${course.gradeDisplay} → ${formatNumber(value)}。`;
+    }
+    refreshMarker();
+    updateSummary();
+  });
+  input.addEventListener("blur", () => {
+    const value = Number(input.value);
+    if (input.value.trim() === "" || !Number.isFinite(value) || value < 0 || value > 100) {
+      input.value = formatNumber(getEffectiveGrade(course, index));
+    }
+  });
+
+  wrapper.append(input, original);
+  gradeCell.appendChild(wrapper);
+  refreshMarker();
+  return gradeCell;
+}
+
 function renderCourses() {
   elements.courseList.replaceChildren();
-  state.courses.forEach((course, index) => {
+  for (const index of getScopedIndexes(false)) {
+    const course = state.courses[index];
     const row = document.createElement("tr");
     if (!isSelectable(course)) row.className = "disabled";
 
@@ -255,13 +417,11 @@ function renderCourses() {
     const creditCell = document.createElement("td");
     creditCell.className = "number-column";
     creditCell.textContent = formatNumber(course.credit);
-    const gradeCell = document.createElement("td");
-    gradeCell.className = "number-column";
-    gradeCell.textContent = course.gradeDisplay;
+    const gradeCell = renderGradeCell(course, index, row);
 
     row.append(checkCell, termCell, nameCell, typeCell, creditCell, gradeCell);
     elements.courseList.appendChild(row);
-  });
+  }
 }
 
 function renderCalculator() {
@@ -272,8 +432,10 @@ function renderCalculator() {
   elements.uploadView.hidden = true;
   elements.calculatorView.hidden = false;
   elements.chooseAgain.hidden = false;
+  renderTermFilters();
   renderFilters();
   renderCourses();
+  updateSimulationControls();
   updateSummary();
 }
 
@@ -283,6 +445,11 @@ function resetUpload() {
   elements.calculatorView.hidden = true;
   elements.uploadView.hidden = false;
   elements.chooseAgain.hidden = true;
+  state.courses = [];
+  state.selected.clear();
+  state.simulatedGrades.clear();
+  state.activeTerm = ALL_TERMS;
+  state.simulationEnabled = false;
 }
 
 elements.dropZone.addEventListener("click", () => elements.fileInput.click());
@@ -305,3 +472,15 @@ elements.chooseAgain.addEventListener("click", resetUpload);
 elements.selectAll.addEventListener("click", () => setAll(true));
 elements.selectNone.addEventListener("click", () => setAll(false));
 elements.toggleAll.addEventListener("change", () => setAll(elements.toggleAll.checked));
+elements.simulationToggle.addEventListener("click", () => {
+  state.simulationEnabled = !state.simulationEnabled;
+  updateSimulationControls();
+  renderCourses();
+  updateSummary();
+});
+elements.resetSimulation.addEventListener("click", () => {
+  state.simulatedGrades.clear();
+  elements.simulationMessage.textContent = "已恢复全部原始成绩。";
+  renderCourses();
+  updateSummary();
+});

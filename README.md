@@ -16,7 +16,9 @@
 3. 双击 `打开GPA计算器.html`。
 4. 选择或拖入刚刚导出的 Excel 文件。
 5. 使用“课程性质”按钮整类选择平台、通修、通识等课程，GPA 和已选学分会自动更新。
-6. 你可以先在线试试看：**(https://zhong-chu.github.io/nju-gpa-excel-calculator/)**
+6. 使用“学期范围”按钮查看全部学期或单独某个学期的课程与 GPA。
+7. 点击“开启成绩模拟”，修改课程成绩即可比较原始 GPA 和模拟 GPA；模拟不会修改原始 Excel。
+8. 你可以先在线试试看：**[点击打开 GPA 计算器](https://zhong-chu.github.io/nju-gpa-excel-calculator/)**
 <p align="center">
   <img
     src="https://github.com/user-attachments/assets/f1c7a256-b73f-426d-8f28-6910939f7be1"
@@ -38,6 +40,7 @@
 2. 支持“课程名 / 课程名称”“总成绩 / 总评成绩 / 成绩”等常见表头。
 3. “通过”等非数值成绩会显示，但不参与 GPA。
 4. 计算方式：`Σ（成绩 × 学分）÷ Σ学分 ÷ 20`。
+5. 模拟成绩仅保存在当前页面内，重新选择文件或关闭页面后即清除。
 
 ## :sparkles: 隐私
 
@@ -50,5 +53,4 @@
 本项目的最初想法受到 waterxjw 开发的 `NJU-GPA-Calculator` 启发。感谢原作者的开源分享。原项目是一款面向旧版南京大学教务系统的Chrome 扩展，因为版本等等原因我发现无法使用，
 
 因此，我决定开发这个NJU GPA Excel 计算器项目，希望对大家也是对我自己能够有所帮助！
-
 
