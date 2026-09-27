@@ -7,9 +7,22 @@
 
 **我做了这样一个工具：这是一个完全在本机运行的成绩Excel计算工具，不需要安装浏览器扩展。**
 
-> 本项目是非官方辅助工具，与南京大学官方无隶属关系；计算结果仅供个人参考。
+> 🎉 **v1.1.0 已发布**
+>
+> 新增按学期筛选、成绩模拟和 GPA 变化对比，并更新为南大紫界面。
+>
+> <img width="933" height="669" alt="new2" src="https://github.com/user-attachments/assets/928efce8-3be8-4ee9-bb68-d6c559efb03b" />
+<img width="1040" height="650" alt="new1" src="https://github.com/user-attachments/assets/a9f3481d-c422-46e4-835c-ceb25c489ff3" />
+ [查看更新并下载 v1.1.0](https://github.com/zhong-chu/nju-gpa-excel-calculator/releases/tag/v1.1.0)
 
+## ✨ v1.1.0 更新内容
 
+- 新增按学期筛选
+- 新增成绩模拟
+- 显示原始 GPA、模拟 GPA 和变化量
+- 支持一键恢复原始成绩
+- 更新为南大紫界面
+- 
 ## :sparkles: 使用方法
 1. 点击仓库的 **Code** 按钮，**Download ZIP** 下载完整项目，下载后解压文件夹。
 2. 在南京大学教服平台点击成绩信息、成绩查询，然后在“我的成绩”页面选择你需要的学期成绩点击“导出”。
@@ -21,17 +34,18 @@
 8. 你可以先在线试试看：**[点击打开 GPA 计算器](https://zhong-chu.github.io/nju-gpa-excel-calculator/)**
 <p align="center">
   <img
-    src="https://github.com/user-attachments/assets/f1c7a256-b73f-426d-8f28-6910939f7be1"
-    alt="GitHub 1"
+    src="https://github.com/user-attachments/assets/6c6c7938-9955-4efa-9d53-791922429d47"
+    alt="new2"
     height="250"
   >
   &nbsp;
   <img
-    src="https://github.com/user-attachments/assets/c26a87ee-4ef3-47e0-9c5c-223c3b2a2345"
-    alt="GitHub 2"
+    src="https://github.com/user-attachments/assets/7ea26bda-8c6d-4ad1-9b3b-82503dcb968d"
+    alt="new3"
     height="250"
   >
 </p>
+
 
 
 ## :sparkles: 数据规则
